@@ -1,3 +1,5 @@
+console.log('Function hit, API key exists:', !!process.env.ANTHROPIC_API_KEY);
+
 const RATE_LIMIT = 30; // max messages per day per IP
 
 const rateLimitStore = new Map();[cite: 1]
