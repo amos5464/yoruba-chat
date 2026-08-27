@@ -1,28 +1,28 @@
-console.log('Function hit, API key exists:', !!process.env.ANTHROPIC_API_KEY);
+console.log('Function hit, API key exists:', !!process.env.GEMINI_API_KEY);
 
 const RATE_LIMIT = 30; // max messages per day per IP
 
-const rateLimitStore = new Map();[cite: 1]
+const rateLimitStore = new Map();
 
-function getRateLimit(ip) {[cite: 1]
-  const now = Date.now();[cite: 1]
-  const windowMs = 24 * 60 * 60 * 1000; // 24 hours[cite: 1]
+function getRateLimit(ip) {
+  const now = Date.now();
+  const windowMs = 24 * 60 * 60 * 1000; // 24 hours
 
-  if (!rateLimitStore.has(ip)) {[cite: 1]
-    rateLimitStore.set(ip, { count: 0, resetAt: now + windowMs });[cite: 1]
+  if (!rateLimitStore.has(ip)) {
+    rateLimitStore.set(ip, { count: 0, resetAt: now + windowMs });
   }
 
-  const record = rateLimitStore.get(ip);[cite: 1]
+  const record = rateLimitStore.get(ip);
 
-  if (now > record.resetAt) {[cite: 1]
-    record.count = 0;[cite: 1]
-    record.resetAt = now + windowMs;[cite: 1]
+  if (now > record.resetAt) {
+    record.count = 0;
+    record.resetAt = now + windowMs;
   }
 
-  return record;[cite: 1]
+  return record;
 }
 
-const MODES = {[cite: 1]
+const MODES = {
   free: `You are Àṣà, a warm and encouraging Yoruba language tutor for beginners. The user is learning conversational Yoruba. 
 Rules:
 - Keep responses under 100 words
@@ -30,7 +30,7 @@ Rules:
 - Always provide English translations in parentheses immediately after Yoruba
 - Correct mistakes gently — praise first, then correct
 - Include tonal marks where relevant (à, á, ā)
-- End each response with one follow-up question or mini challenge to keep them practicing`,[cite: 1]
+- End each response with one follow-up question or mini challenge to keep them practicing`,
 
   greetings: `You are Àṣà, a Yoruba tutor focused on greetings and respect phrases.
 Teach: time-based greetings, responses, how to greet elders (use of Ẹ vs Mo).
@@ -39,7 +39,7 @@ Rules:
 - Bold all Yoruba words
 - Always show English translation in parentheses
 - Correct gently, praise first
-- One practice prompt at the end of every response`,[cite: 1]
+- One practice prompt at the end of every response`,
 
   phrases: `You are Àṣà, a Yoruba tutor focused on practical everyday phrases for life in Nigeria.
 Cover: market, home, church, food, transport, and emergency phrases.
@@ -48,7 +48,7 @@ Rules:
 - Bold all Yoruba words
 - English translations in parentheses
 - Practical and conversational tone
-- End with a scenario challenge ("Now try to say: ...")`,[cite: 1]
+- End with a scenario challenge ("Now try to say: ...")`,
 
   quiz: `You are Àṣà, a fun Yoruba quiz master.
 Ask ONE question per response: translate English→Yoruba, Yoruba→English, or fill-in-the-blank.
@@ -57,7 +57,7 @@ Rules:
 - Start at beginner level (basic greetings)
 - Progress difficulty as user gets questions right
 - Keep it encouraging — never make wrong answers feel bad
-- Bold all Yoruba words, English translations in parentheses`,[cite: 1]
+- Bold all Yoruba words, English translations in parentheses`,
 
   translate: `You are Àṣà, a Yoruba-English translation assistant.
 For English input: translate to Yoruba with tonal marks, break down word by word, explain any grammar.
@@ -66,38 +66,38 @@ Rules:
 - Always do word-by-word breakdown
 - Bold Yoruba words
 - Keep explanations clear and beginner-friendly
-- Under 150 words`[cite: 1]
+- Under 150 words`
 };
 
-export default async function handler(req, res) {[cite: 1]
+export default async function handler(req, res) {
   // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');[cite: 1]
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');[cite: 1]
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');[cite: 1]
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') return res.status(200).end();[cite: 1]
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });[cite: 1]
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   // Rate limiting
-  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket?.remoteAddress || 'unknown';[cite: 1]
-  const record = getRateLimit(ip);[cite: 1]
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket?.remoteAddress || 'unknown';
+  const record = getRateLimit(ip);
 
-  if (record.count >= RATE_LIMIT) {[cite: 1]
-    const resetIn = Math.ceil((record.resetAt - Date.now()) / 1000 / 60 / 60);[cite: 1]
-    return res.status(429).json({[cite: 1]
-      error: `Daily limit reached (${RATE_LIMIT} messages). Resets in ${resetIn} hour(s).`,[cite: 1]
-      rateLimited: true[cite: 1]
+  if (record.count >= RATE_LIMIT) {
+    const resetIn = Math.ceil((record.resetAt - Date.now()) / 1000 / 60 / 60);
+    return res.status(429).json({
+      error: `Daily limit reached (${RATE_LIMIT} messages). Resets in ${resetIn} hour(s).`,
+      rateLimited: true
     });
   }
 
-  const { messages, mode } = req.body;[cite: 1]
+  const { messages, mode } = req.body;
 
-  if (!messages || !Array.isArray(messages) || !mode) {[cite: 1]
-    return res.status(400).json({ error: 'Invalid request body' });[cite: 1]
+  if (!messages || !Array.isArray(messages) || !mode) {
+    return res.status(400).json({ error: 'Invalid request body' });
   }
 
-  if (!MODES[mode]) {[cite: 1]
-    return res.status(400).json({ error: 'Invalid mode' });[cite: 1]
+  if (!MODES[mode]) {
+    return res.status(400).json({ error: 'Invalid mode' });
   }
 
   try {
@@ -116,32 +116,32 @@ export default async function handler(req, res) {[cite: 1]
         },
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: MODES[mode] }][cite: 1]
+            parts: [{ text: MODES[mode] }]
           },
           contents: formattedContents
         })
       }
     );
 
-    const data = await response.json();[cite: 1]
+    const data = await response.json();
 
     if (!response.ok) {
       console.error('Gemini error:', data);
-      return res.status(response.status).json({ error: data.error?.message || 'AI service error' });[cite: 1]
+      return res.status(response.status).json({ error: data.error?.message || 'AI service error' });
     }
 
     // Increment rate limit count after successful call
-    record.count++;[cite: 1]
+    record.count++;
 
     // Extract text output from Gemini response schema
     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received.';
-    return res.status(200).json({[cite: 1]
+    return res.status(200).json({
       reply,
-      remaining: RATE_LIMIT - record.count[cite: 1]
+      remaining: RATE_LIMIT - record.count
     });
 
-  } catch (err) {[cite: 1]
-    console.error('Server error:', err);[cite: 1]
-    return res.status(500).json({ error: 'Server error. Please try again.' });[cite: 1]
+  } catch (err) {
+    console.error('Server error:', err);
+    return res.status(500).json({ error: 'Server error. Please try again.' });
   }
 }
